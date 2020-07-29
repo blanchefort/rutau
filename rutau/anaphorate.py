@@ -107,7 +107,7 @@ def anaphorate_names(sentence: str) -> List[Dict]:
         for candidate in candidates_selected:
             if sentence[candidate['itemB']['start'] - 2] in '.!?' or candidate['itemB']['start'] == 0:
                 candidate['itemB']['anaphor'] = candidate['itemB']['anaphor'].capitalize()
-            new_text = sentence[:candidate['itemB']['start']] + candidate['itemB']['anaphor'] + sentence[candidate['itemB']['stop']+1:]
+            new_text = sentence[:candidate['itemB']['start']] + candidate['itemB']['anaphor'] + sentence[candidate['itemB']['stop']:]
             if candidate['itemA']['start'] < candidate['itemB']['start']:
                 # Текст начинается с антецедента, смещение не нужно:
                 antecedent = {
@@ -127,7 +127,7 @@ def anaphorate_names(sentence: str) -> List[Dict]:
                     'start': candidate['itemB']['start'],
                     'end': candidate['itemB']['start'] + len(candidate['itemB']['anaphor']),
                 }
-                offset = len(candidate['itemB']['text']) - len(candidate['itemB']['anaphor']) + 1
+                offset = len(candidate['itemB']['text']) - len(candidate['itemB']['anaphor'])
                 antecedent = {
                     'text': candidate['itemA']['text'],
                     'start': candidate['itemA']['start'] - offset,
