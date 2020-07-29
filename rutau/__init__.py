@@ -3,11 +3,12 @@ import wget
 from navec import Navec
 from slovnet import NER
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 models_path = os.environ.get('MODELS_PATH') or os.path.join(basedir, 'models')
+data_path = os.path.join(basedir, 'datafiles')
 
 os.makedirs(models_path, exist_ok=True)
 
