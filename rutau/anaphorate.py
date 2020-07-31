@@ -1,48 +1,17 @@
-"""Заменяем PER-сущности местоимениями
+"""Методы, генерирующие корпус текстов для разрешения местоимённой анафоры.
 """
 import os
 from typing import List, Dict
-import pickle
-import random
 import pymorphy2
 from razdel import tokenize
 from slovnet import NER
 from . import models_path, data_path, load_ner
 from .splitter import get_stead_sent_pairs, get_diff_sent_pairs
+from .synonimizers import get_nomen
 
 
 ner = load_ner(models_path)
 morph = pymorphy2.MorphAnalyzer()
-
-with open(os.path.join(data_path, 'surnames.pickle'), 'rb') as fp:
-    surnames = pickle.load(fp)
-with open(os.path.join(data_path, 'names.pickle'), 'rb') as fp:
-    names = pickle.load(fp)
-
-def get_nomen(count: int, gender: str, type: str) -> List[str]:
-    """Генерация случайных имён и фамилий
-
-    Имена и фамилии были взяты из проекта Ивана Бегтина:
-    https://github.com/datacoon/russiannames
-
-    Args:
-        count (int): Количество имён, которое необходимо сгенерировать.
-
-        gender (str): Род имён (женский или мужской). Варианты: `f`, `m`.
-
-        type (str): Тип генерируемого имени - имя собственное, либо фамилия. Варианты:
-        `name`, `surname`.
-
-    Returns:
-        List[str]: Список сгенерированных имён.
-    """
-    lst = list(surnames.items()) if type == 'surname' else list(names.items())
-    selected_items = []
-    while len(selected_items) < count:
-        item = random.choice(lst)
-        if item[1] == gender and item[0] not in selected_items:
-            selected_items.append(item[0])
-    return selected_items
 
 def get_pronoun(word: str) -> str:
     """Получаем местоимение из имени
@@ -64,11 +33,13 @@ def get_pronoun(word: str) -> str:
         tagset.add('Af-p')
     return pronoun.inflect(tagset).word
 
-def anaphorate_names(sentence: str) -> List[Dict]:
-    """Получем новые тексты путём замены имён местоимениями
+def anaphorate_sentence(sentence: str, ner_type: str) -> List[Dict]:
+    """Получем новые тексты путём замены выявленных NER-сущностей местоимениями
 
     Args:
         text (str): Входной текст
+
+        ner_type (str): Тип извлекаемой сущности: PER, LOC, ORG
 
     Returns:
         List: Результирующий список, состоящий из антецедента, анафора и нового текста
@@ -106,7 +77,7 @@ def anaphorate_names(sentence: str) -> List[Dict]:
     per_items: List = []
     ner_tokens = ner(sentence).spans
     for span in ner_tokens:
-        if span.type == 'PER':
+        if span.type == ner_type:
             per_items.append(span)
     if len(per_items) >= 2:
         # выбираем всех кандидатов
@@ -199,11 +170,11 @@ def anaphorate(text: str, sent_splitting: str, anaph_type: List[str]) -> List[Di
     
     for sentence in sentences:
         if 'LOC' in anaph_type:
-            pass
+            corpus += anaphorate_sentence(sentence, ner_type='LOC')
         if 'ORG' in anaph_type:
-            pass
+            corpus += anaphorate_sentence(sentence, ner_type='ORG')
         if 'PER' in anaph_type:
-            corpus += anaphorate_names(sentence)
+            corpus += anaphorate_sentence(sentence, ner_type='PER')
     return corpus
 
 def find_pronoun_pairs(sentence: str) -> List[Dict]:
@@ -240,8 +211,8 @@ def find_pronoun_pairs(sentence: str) -> List[Dict]:
         ['они', 'ихнее'], ['оно', 'его'],]
     tokens = list(tokenize(sentence))
 
+    found, antecedent_found, anaphor_found = False, False, False
     for pos, pair in enumerate(pronoun_pairs):
-        found, antecedent_found, anaphor_found = False, False, False
         if set(pair).issubset(set([_.text.lower() for _ in tokens])):
             found = True
             break
@@ -308,8 +279,8 @@ def rename_antecedent(samples: List[Dict], surname: bool, count: int) -> List[Di
             for token in tokens:
                 if token.start == sample['antecedent']['end']+1:
                     pointer = token.text
-            if len(pointer) > 0:
-                gender = 'f' if morph.parse(pointer)[0].tag.gender == 'femn' else 'm'
+                    break
+            gender = 'f' if morph.parse(pointer)[0].tag.gender == 'femn' else 'm'
         # get a list of names
         new_antecedents = get_nomen(count=count, gender=gender, type='name')
         if surname == True:
