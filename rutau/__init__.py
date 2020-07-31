@@ -49,7 +49,7 @@ def load_w2v(models_path: str) -> KeyedVectors:
             os.path.join(models_path, 'w2v', 'model.bin'),
             os.path.join(models_path, 'ruwikiruscorpora_upos_skipgram_300_2_2019.w2v'))
         shutil.rmtree(os.path.join(models_path, 'w2v'))
-        os.remove('182.zip')
+        os.remove(os.path.join(models_path, '182.zip'))
     w2v_model = KeyedVectors.load_word2vec_format(
         os.path.join(models_path, 'ruwikiruscorpora_upos_skipgram_300_2_2019.w2v'),
         binary=True)
