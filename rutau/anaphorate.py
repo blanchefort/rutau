@@ -3,16 +3,16 @@ import pymorphy2
 from razdel import tokenize
 from . import models_path, load_ner
 from .splitter import get_stead_sent_pairs, get_diff_sent_pairs
-from .synonimizers import get_nomen
+from .synonimizers import Synonimizer
 
 class Anaphorate:
     """Набор методов для формирования синтетического размеченного корпуса текстов
     для разрешения местоимённой анафоры для русского языка.
     """
-    def __init__(self, path=False):
-        ner_path = models_path if path is False else path
-        self.ner = load_ner(ner_path)
+    def __init__(self):
+        self.ner = load_ner(models_path)
         self.morph = pymorphy2.MorphAnalyzer()
+        self.Synonimizer = Synonimizer()
     
     
     def get_pronoun(self, word: str) -> str:
@@ -157,9 +157,9 @@ class Anaphorate:
                 * `differently` - пары предложений: соединяем все со всеми последующими
     
             anaph_type (list): Из каких сущностей создавать корпус.
-                * `PER` - имена людей (есть)
-                * `LOC` - названия локаций (будет)
-                * `ORG` - наименования организаций (будет)
+                * `PER` - имена людей
+                * `LOC` - названия локаций
+                * `ORG` - наименования организаций
     
         Returns:
             List: Результирующий список, состоящий из антецедента, анафора и нового текста
@@ -284,9 +284,9 @@ class Anaphorate:
                         break
                 gender = 'f' if self.morph.parse(pointer)[0].tag.gender == 'femn' else 'm'
             # get a list of names
-            new_antecedents = get_nomen(count=count, gender=gender, type='name')
+            new_antecedents = self.Synonimizer.get_nomen(count=count, gender=gender, type='name')
             if surname == True:
-                new_antecedents = [item + ' ' + get_nomen(
+                new_antecedents = [item + ' ' + self.Synonimizer.get_nomen(
                     count=1,
                     gender=gender,
                     type='surname')[0] for item in new_antecedents]

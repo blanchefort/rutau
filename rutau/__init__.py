@@ -55,3 +55,8 @@ def load_w2v(models_path: str) -> KeyedVectors:
         binary=True)
     w2v_model.init_sims(replace=True)
     return w2v_model
+
+
+###
+from .synonimizers import Synonimizer
+from .anaphorate import Anaphorate

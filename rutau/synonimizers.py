@@ -1,5 +1,3 @@
-"""Аугментируем тексты
-"""
 import os
 from typing import List
 import pymorphy2
@@ -11,16 +9,14 @@ from . import models_path, data_path, load_w2v, load_ner
 class Synonimizer:
     """Набор методов для синонимизации текста
     """
-    def __init__(self, path=False):
+    def __init__(self):
         with open(os.path.join(data_path, 'surnames.pickle'), 'rb') as fp:
             self.surnames = pickle.load(fp)
         with open(os.path.join(data_path, 'names.pickle'), 'rb') as fp:
             self.names = pickle.load(fp)
-        
-        ner_path = models_path if path is False else path
-        self.ner = load_ner(ner_path)
+    
+        self.ner = load_ner(models_path)
         self.morph = pymorphy2.MorphAnalyzer()
-        self.w2v_model = load_w2v(models_path)
 
     def get_nomen(self, count: int, gender: str, type: str) -> List[str]:
         """Генерация случайных имён и фамилий
@@ -108,6 +104,7 @@ class Synonimizer:
         Returns:
             List[str]: Список похожих слов.
         """
+        self.w2v_model = load_w2v(models_path)
         normal_form = self.morph.parse(word)[0].normal_form
         try:
             similars = self.w2v_model.most_similar(normal_form + f'_{type}')
