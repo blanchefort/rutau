@@ -5,14 +5,12 @@ from navec import Navec
 from slovnet import NER
 from gensim.models import KeyedVectors
 
-__version__ = '0.1.2'
+__version__ = '0.1.4'
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 models_path = os.environ.get('MODELS_PATH') or os.path.join(basedir, 'models')
 data_path = os.path.join(basedir, 'datafiles')
-
-os.makedirs(models_path, exist_ok=True)
 
 def load_ner(models_path: str) -> NER:
     """Загружаем и инициализируем NER-модель
@@ -23,6 +21,7 @@ def load_ner(models_path: str) -> NER:
     Returns:
         slovnet.NER: Объект slovnet.NER
     """
+    os.makedirs(models_path, exist_ok=True)
     if not os.path.isfile(os.path.join(models_path, 'navec_news_v1_1B_250K_300d_100q.tar')):
         wget.download('https://storage.yandexcloud.net/natasha-navec/packs/navec_news_v1_1B_250K_300d_100q.tar',
                       os.path.join(models_path, 'navec_news_v1_1B_250K_300d_100q.tar'))
@@ -39,6 +38,7 @@ def load_w2v(models_path: str) -> KeyedVectors:
 
     https://rusvectores.org/ru/models/
     """
+    os.makedirs(models_path, exist_ok=True)
     if not os.path.isfile(os.path.join(models_path, 'ruwikiruscorpora_upos_skipgram_300_2_2019.w2v')):
         wget.download('http://vectors.nlpl.eu/repository/20/182.zip',
                       os.path.join(models_path, '182.zip'))
