@@ -5,7 +5,7 @@ from navec import Navec
 from slovnet import NER
 from gensim.models import KeyedVectors
 
-__version__ = '0.1.4'
+__version__ = '0.1.5'
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -60,3 +60,4 @@ def load_w2v(models_path: str) -> KeyedVectors:
 ###
 from .synonimizers import Synonimizer
 from .anaphorate import Anaphorate
+from .coref import Coref, CorefItem

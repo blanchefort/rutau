@@ -179,7 +179,7 @@ class Anaphorate:
                 corpus += self.anaphorate_sentence(sentence, ner_type='PER')
         return corpus
     
-    def find_pronoun_pairs(self, sentence: str) -> List[Dict]:
+    def find_pronoun_pairs(self, sentence) -> List[Dict]:
         """Метод находит в тексте 2 местоимения и связывает их вместе.
     
         Args:
