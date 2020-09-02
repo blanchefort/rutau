@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import Tuple, List, Dict
 import pymorphy2
 from razdel import tokenize
 import os
@@ -29,7 +29,7 @@ class Coref:
         self.morph_tagger = NewsMorphTagger(self.emb)
         self.ner_tagger = NewsNERTagger(self.emb)
         
-    def select_corefs(self, text):
+    def select_corefs(self, text: str) -> Tuple[List]:
         '''Метод извлекает из текста кореферентности на основе NER.
         '''
         doc = Doc(text)
@@ -88,7 +88,7 @@ class Coref:
                 item.coref = indexes[item.coref]
         return sequence, coref_sequence
 
-    def get_pronoun(self, doc_token):
+    def get_pronoun(self, doc_token: Doc) -> str:
         '''Преобразует слово в местоимение
         '''
         # https://pymorphy2.readthedocs.io/en/latest/user/grammemes.html#grammeme-docs
@@ -114,7 +114,8 @@ class Coref:
                 pronoun = 'оно'
 
             tagset = set()
-            tagset.add(cases['Gen'])
+            if 'Case' in feats:
+                tagset.add(cases[feats['Case']])
 
             pronoun = self.morph.parse(pronoun)[0]
             pronoun = pronoun.inflect(tagset).word
@@ -122,7 +123,7 @@ class Coref:
             pronoun = 'он'
         return pronoun
     
-    def replace_with_pronouns(self, sequence, coref_sequence, shift=True):
+    def replace_with_pronouns(self, sequence: Doc, coref_sequence: List, shift: bool = True) -> Tuple[List]:
         '''Заменяем упоминания местоимениями
         '''
         new_sequence = [token.text for token in sequence]
@@ -146,11 +147,12 @@ class Coref:
 
         return new_sequence, coref_sequence
     
-    def coref_to_dict(self, coref_sequence):
+    def coref_to_dict(self, coref_sequence: List[CorefItem]) -> List[Dict]:
         ''' CorefItem -> list
         '''
-        ants, ments = [], []
-        coreferense = []
+        ants: List = []
+        ments = []
+        coreferense: List = []
         for itm in coref_sequence:
             if itm.coref == -100:
                 ants.append({
@@ -174,11 +176,11 @@ class Coref:
             })
         return coreferense
     
-    def anaphoras_to_corpus(self, anaphoras):
+    def anaphoras_to_corpus(self, anaphoras: List) -> List[Dict]:
         '''Конвертируем найденные анафорические связи в корпус
         '''
         for item in anaphoras:
-            corpus = []
+            corpus: List = []
             sequence = list(tokenize(item['text']))
             for i, s in enumerate(sequence):
                 if s.start == item['antecedent']['start']:
@@ -200,10 +202,25 @@ class Coref:
                     }]
                     break
             corpus.append({
-                'text': [s.text for s in sequence],
+                'text': item['text'],
+                'sequence': [s.text for s in sequence],
                 'coreferences': [{
                     'antecedent': antecedent,
                     'mentions': mentions,
                 }],
             })
+        return corpus
+    
+    def get_anaphoras(self, text: str, shift: bool = True) -> Tuple[List]:
+        """Связи: имя собственное + несколько упоминаний-местоимений.
+        """
+        corpus: List = []
+        sequence, coref_sequence = self.select_corefs(text)
+        if len(coref_sequence) == 0:
+            return corpus
+        sequence, coref_sequence = self.replace_with_pronouns(sequence, coref_sequence, shift=shift)
+        corpus.append({
+            'sequence': sequence,
+            'coreferences': self.coref_to_dict(coref_sequence)
+        })
         return corpus

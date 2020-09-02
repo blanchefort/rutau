@@ -1,5 +1,5 @@
 # rutau
-Text augmentation for russian language
+Methods for generating synthetic marked datasets for the Russian language.
 
 # Installation
 
@@ -8,41 +8,74 @@ git clone https://github.com/blanchefort/rutau.git
 pip install -r requirements.txt
 ```
 
-# Usage Example
+# Methods
+
+## Разрешение местоимённой анафоры. Anaphora Resolution.
+
+Задача: определить в тексте, к какому имени (или ранее встречавшемуся слову) относится местоимение. Например, в высказывании «Мама мыла пол. Она вымыла его дочиста» анафорическое выражение «она» отсылает к антецеденту мама, а выражение «его» — к антецеденту пол.
+
+Существующие корпусы для решения этой задачи:
+* [Conll-2012](http://conll.cemantix.org/2012/data.html) и [Winograd Schema Challenge](http://commonsensereasoning.org/winograd.html) - для английского языка.
+* [RuCoref](http://www.dialog-21.ru/evaluation/2014/anaphora/) - для русского.
+
+Пример:
 
 ```
-from rutau.anaphorate import anaphorate
+from rutau.rutau import Coref
 
-sentence = 'Василий купил ботинки. Василий Иванович продал ботинки.'
-result = anaphorate(text=sentence, sent_splitting='differently', anaph_type=['PER'])
+coref = Coref()
 
-print(result)
+text = 'Россиянка Мария Бутина, судимая в США по обвинению в участии в заговоре с целью ведения деятельности в пользу иностранного государства, может стать фигурантом еще одного дела. Об этом сообщает Daily Beast. Издание обратило внимание на запрос федеральной прокуратуры в Вашингтоне, который опубликовал в Twitter журналист Спенсер Хсу. Данная бумага находилась в закрытых судебных документах. Прокуратура просит разрешение транспортировать Бутину из тюрьмы для дачи показаний по вероятному уголовному расследованию, детали которого не уточняются. Перевозку россиянки планируется осуществить тайно, в том числе и в целях безопасности самой ответчицы. 13 декабря Мария Бутина в суде призналась в работе иностранным агентом под руководством российского государственного чиновника без согласования с Генпрокуратурой США. Она пошла на сделку со следствием и признала вину по некоторым пунктам обвинения. Следующее слушание по делу назначено на 12 февраля. Бутина была задержана в США 15 июля. Американская сторона заявляет, что она пыталась повлиять на главных спонсоров Республиканской партии для продвижения российских интересов. Кремль считает все обвинения со стороны США в адрес россиянки необоснованными, а в МИД заявили, что ее подвергали пыткам в тюрьме.'
+
+result = coref.get_anaphoras(raw_texts[15], shift=False)
 ```
 
 Result:
+
 ```
-[{
-  'text': 'Василий купил ботинки. Он продал ботинки.',
-  'antecedent': {
-    'text': 'Василий',
-    'start': 0, 
-    'end': 7
-   }, 
-   'anaphor': {
-    'text': 'Он', 
-    'start': 23, 
-    'end': 25
-   }}, 
- {
-  'text': 'Он купил ботинки. Василий Иванович продал ботинки.', 
-  'antecedent': {
-    'text': 'Василий Иванович', 
-    'start': 17, 
-    'end': 33
-   }, 
-    'anaphor': {
-      'text': 'Он', 
-      'start': 0, 
-      'end': 2
-}}]
+[{'sequence': ['Россиянка', 'Мария', 'Бутина', <...>, 'в', 'тюрьме', '.'],
+  'coreferences': [{'antecedent': {'token': 'Мария Бутина',
+     'lemma': 'мария',
+     'start': 1,
+     'end': 2},
+    'mentions': [{'token': 'Мария Бутина',
+      'lemma': 'мария',
+      'start': 99,
+      'end': 100,
+      'coref': 1},
+     {'token': 'её', 'lemma': 'бутин', 'start': 65, 'end': 65, 'coref': 1},
+     {'token': 'Мария Бутина',
+      'lemma': 'бутин',
+      'start': 99,
+      'end': 100,
+      'coref': 1}]},
+   {'antecedent': {'token': 'Мария Бутина',
+     'lemma': 'бутин',
+     'start': 1,
+     'end': 2},
+    'mentions': [{'token': 'Мария Бутина',
+      'lemma': 'мария',
+      'start': 99,
+      'end': 100,
+      'coref': 1},
+     {'token': 'её', 'lemma': 'бутин', 'start': 65, 'end': 65, 'coref': 1},
+     {'token': 'Мария Бутина',
+      'lemma': 'бутин',
+      'start': 99,
+      'end': 100,
+      'coref': 1}]},
+   {'antecedent': {'token': 'США', 'lemma': 'сша', 'start': 6, 'end': 6},
+    'mentions': [{'token': 'их',
+      'lemma': 'сша',
+      'start': 117,
+      'end': 117,
+      'coref': 6},
+     {'token': 'них', 'lemma': 'сша', 'start': 146, 'end': 146, 'coref': 6},
+     {'token': 'их', 'lemma': 'сша', 'start': 174, 'end': 174, 'coref': 6}]}]}]
 ```
+
+# Usage Conditions
+
+CC-BY-NC.
+
+Commercial usage available after agreement with package authors.
