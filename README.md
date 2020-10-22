@@ -1,5 +1,5 @@
 # rutau
-Methods for generating synthetic marked datasets for the Russian language.
+Methods for generating synthetic marked datasets for Russian language.
 
 # Installation
 
