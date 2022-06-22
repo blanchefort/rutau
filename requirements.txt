@@ -12,7 +12,7 @@ gensim==3.8.3
 idna==2.10
 jmespath==0.10.0
 navec==0.9.0
-numpy==1.19.1
+numpy==1.22.0
 pymorphy2==0.8
 pymorphy2-dicts==2.4.393442.3710985
 python-dateutil==2.8.1
