@@ -17,6 +17,7 @@ class Synonimizer:
     
         self.ner = load_ner(models_path)
         self.morph = pymorphy2.MorphAnalyzer()
+        self.w2v_model = load_w2v(models_path)
 
     def get_nomen(self, count: int, gender: str, type: str) -> List[str]:
         """Генерация случайных имён и фамилий
@@ -93,27 +94,29 @@ class Synonimizer:
             result = word_to.word
         return result
 
-    def get_similars(self, word: str, type: str) -> List[str]:
+    def get_similars(self, word: str, type: str, topn: int) -> List[str]:
         """Поиск похожих слов по word2vec
     
         Args:
             word (str): Слово-шаблон, для которого осуществляется поиск "синонимов".
     
             type (str): Часть речи слова. Например, 'NOUN', 'ADJF' или 'VERB'.
+            
+            topn (int): Количество наиболее вероятных синонимов для генерации.
     
         Returns:
             List[str]: Список похожих слов.
         """
-        self.w2v_model = load_w2v(models_path)
+        
         normal_form = self.morph.parse(word)[0].normal_form
         try:
-            similars = self.w2v_model.most_similar(normal_form + f'_{type}')
+            similars = self.w2v_model.most_similar(normal_form + f'_{type}', topn=topn)
             sim_list = [item[0].split(f'_{type}')[0] for item in similars if type in item[0]]
         except:
             sim_list = []
         return sim_list
 
-    def synonimize_text(self, text: str, type: List[str]) -> List[str]:
+    def synonimize_text(self, text: str, type: List[str], topn: int) -> List[str]:
         """Метод синонимизирует текст на основе word2vec.
     
         Метод получает "синонимы" определённых слов и создаёт новые тексты, заменяя слова оригинального
@@ -123,6 +126,8 @@ class Synonimizer:
             text (str): Оригинальный текст, который нужно аугментировать.
     
             type (List[str]): Часть речи слов, которые подвергнутся замене. Список: ['NOUN', 'ADJF', 'VERB'].
+            
+            tonp (int): Количество текстов для генерации.
     
         Returns:
             List[str]: Список аугментированных текстов.
@@ -144,7 +149,7 @@ class Synonimizer:
             selected_words = self.select_by_pos(word_list=tokens, pos='NOUN')
             for word in selected_words:
                 if 'Name' not in self.morph.parse(word)[0].tag:
-                    sim_list = self.get_similars(word=word, type='NOUN')
+                    sim_list = self.get_similars(word=word, type='NOUN', topn=topn)
                     if len(sim_list) > 0:
                         sim_list = [self.transform_word(word_from=word, word_to=sim) for sim in sim_list]
                         new_list.append([word, sim_list])
@@ -153,7 +158,7 @@ class Synonimizer:
         if 'ADJF' in type:
             selected_words = self.select_by_pos(word_list=tokens, pos='ADJF')
             for word in selected_words:
-                sim_list = self.get_similars(word=word, type='ADJF')
+                sim_list = self.get_similars(word=word, type='ADJF', topn=topn)
                 if len(sim_list) > 0:
                     sim_list = [self.transform_word(word_from=word, word_to=sim) for sim in sim_list]
                     new_list.append([word, sim_list])
@@ -162,7 +167,7 @@ class Synonimizer:
         if 'VERB' in type:
             selected_words = self.select_by_pos(word_list=tokens, pos='VERB')
             for word in selected_words:
-                sim_list = self.get_similars(word=word, type='VERB')
+                sim_list = self.get_similars(word=word, type='VERB', topn=topn)
                 if len(sim_list) > 0:
                     sim_list = [self.transform_word(word_from=word, word_to=sim) for sim in sim_list]
                     new_list.append([word, sim_list])
@@ -188,4 +193,4 @@ class Synonimizer:
                 if word_from.isupper():
                     word_to = word_to.upper()
                 new_texts[num] = new_texts[num].replace(word_from, word_to)
-        return new_texts
+        return new_texts[:topn]
